@@ -1,0 +1,10 @@
+FROM eclipse-temurin:8-jre
+
+WORKDIR /app
+
+COPY aqa-shop.jar .
+COPY application.properties .
+
+EXPOSE 8080
+
+CMD ["java", "-jar", "aqa-shop.jar"]

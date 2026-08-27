@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+   mysql:
+      image: mysql:8.0
+
+      environment:
+        MYSQL_DATABASE: app
+        MYSQL_USER: app
+        MYSQL_PASSWORD: pass
+        MYSQL_ROOT_PASSWORD: root
+
+      ports:
+        - "3306:3306"
+      volumes:
+        - mysql-data:/var/lib/mysql
+
+      healthcheck:
+        test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent" ]
+        interval: 5s
+        timeout: 5s
+        retries: 10
+
+
+   gate-simulator:
+     build:
+       context: ./gate-simulator
+
+     ports:
+      - "9999:9999"
+
+   aqa-shop:
+     build:
+       context: .
+       dockerfile: Dockerfile.shop
+
+     ports:
+       - "8080:8080"
+
+     depends_on:
+       mysql:
+         condition: service_healthy
+       gate-simulator:
+         condition: service_started
+
+volumes:
+  mysql-data:
