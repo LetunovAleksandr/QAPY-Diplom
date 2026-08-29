@@ -13,6 +13,12 @@ class CardDataFactory:
             data = json.load(json_file)
             return data[1]['number']
 
+    def card_invalid(self):
+        return '4444 4444 4444 4444'
+
+    def short_card_number(self):
+        return '1234'
+
     def month_valid(self):
         now = datetime.datetime.now()
         next_month = now + relativedelta(months=1)
@@ -25,18 +31,17 @@ class CardDataFactory:
 
     def year_valid(self):
         now = datetime.datetime.now()
-        next_year = now + relativedelta(years=1)
-        return next_year.strftime("%y")
+        return now.strftime("%y")
 
     def year_invalid(self):
         now = datetime.datetime.now()
         prev_year = now - relativedelta(years=1)
         return prev_year.strftime("%y")
 
-    def owner_valid(self):
+    def holder_valid(self):
         return 'Ivan Ivanov'
 
-    def owner_invalid(self):
+    def empty_field(self):
         return ''
 
     def cvv_valid(self):

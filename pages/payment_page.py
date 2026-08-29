@@ -1,6 +1,6 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 
 class PaymentPage:
 
@@ -14,6 +14,7 @@ class PaymentPage:
     CONTINUE_BUTTON = (By.XPATH, '//*[@id="root"]/div/form/fieldset/div[4]/button')
     NTF= (By.CSS_SELECTOR, 'div[class*="notification"]')
     CLOSE_NTF_BUTTON = (By.XPATH, '//*[@id="root"]/div/div[3]/button/span/span/span')
+    INPUT_SUB = (By.CLASS_NAME, 'input__sub')
 
     def __init__(self, driver):
         self.driver = driver
@@ -59,9 +60,12 @@ class PaymentPage:
 
     def find_notification(self):
         self.wait.until(
-            EC.visibility_of_element_located(self.NTF)
+            ec.visibility_of_element_located(self.NTF)
         )
         return self.driver.find_element(*self.NTF).text
 
     def close_notification(self):
         self.driver.find_element(*self.CLOSE_NTF_BUTTON).click()
+
+    def find_error_sub(self):
+        return self.driver.find_element(*self.INPUT_SUB).text

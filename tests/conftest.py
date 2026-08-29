@@ -1,6 +1,5 @@
 import pytest
 from  selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import pymysql
 
 
@@ -47,27 +46,27 @@ def db_driver():
 def clean_db(db_driver):
     cursor, connection = db_driver
     ids = {
-        'payment': None,
-        'order': None,
-        'credit': None,
+        'payment_entity': None,
+        'order_entity': None,
+        'credit_request_entity': None,
     }
     yield ids
-    if ids['payment']:
+    if ids['payment_entity']:
         cursor.execute(
             'DELETE FROM payment_entity WHERE id = %s',
-            (ids['payment'],)
+            (ids['payment_entity'],)
         )
 
-    if ids['order']:
+    if ids['order_entity']:
         cursor.execute(
             'DELETE FROM order_entity WHERE id = %s',
-            (ids['order'],)
+            (ids['order_entity'],)
         )
 
-    if ids['credit']:
+    if ids['credit_request_entity']:
         cursor.execute(
             'DELETE FROM credit_request_entity WHERE id = %s',
-            (ids['credit'],)
+            (ids['credit_request_entity'],)
         )
 
     connection.commit()
