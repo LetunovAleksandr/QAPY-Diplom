@@ -1,0 +1,7 @@
+{
+    "timestamp": "2026-09-01T18:35:40.810+0000",
+    "status": 500,
+    "error": "Internal Server Error",
+    "message": "400 Bad Request",
+    "path": "/api/v1/pay"
+}

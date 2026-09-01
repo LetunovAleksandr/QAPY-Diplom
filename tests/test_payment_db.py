@@ -1,222 +1,156 @@
+import allure
 import pytest
-from factories.card_data_factory import CardDataFactory
 from pages.payment_page import PaymentPage
 from tests.conftest import browser_driver
 from utils.db_queries import Database
+from utils.helper import assert_ui, assert_status_in_db, assert_amount, assert_record_operation_db
 
 
+@allure.feature('Покупка тура банковской картой')
 class TestPayment:
+    @allure.title('Покупка банковской картой: {status}')
     @pytest.mark.parametrize(
-        'payment_method, card, month, year, owner, cvv, message, payment_table, order_table, query_payment, query_order, status, amount ',[
+        'card_num, message, query_payment, query_order, status',[
             (
-                'card',
-                CardDataFactory().card_approved(),
-                CardDataFactory().month_valid(),
-                CardDataFactory().year_valid(),
-                CardDataFactory().holder_valid(),
-                CardDataFactory().cvv_valid(),
+                '4444 4444 4444 4441',
                 "Операция одобрена Банком.",
-                'payment_entity',
-                'order_entity',
                 'SELECT amount, status, transaction_id FROM payment_entity WHERE id = %s',
                 'SELECT payment_id FROM order_entity WHERE id = %s',
-                'APPROVED',
-                45000
+                'APPROVED'
             ),
             (
-                    'card',
-                    CardDataFactory().card_declined(),
-                    CardDataFactory().month_valid(),
-                    CardDataFactory().year_valid(),
-                    CardDataFactory().holder_valid(),
-                    CardDataFactory().cvv_valid(),
+                    "4444 4444 4444 4442",
                     "Банк отказал в проведении операции.",
-                    'payment_entity',
-                    'order_entity',
                     'SELECT amount, status, transaction_id FROM payment_entity WHERE id = %s',
                     'SELECT payment_id FROM order_entity WHERE id = %s',
                     'DECLINED',
-                    45000
             )
         ],
         ids=[
-            'card_approved',
-            'card_declined',
+            'Успешная покупка банковской картой',
+            'Отклонение платежа',
         ]
     )
-
-    def test_payment_card(self,
-                                     browser_driver,
-                                     db_driver,
-                                     clean_db,
-                                     payment_method,
-                                     card,
-                                     month,
-                                     year,
-                                     owner,
-                                     cvv,
-                                     message,
-                                     payment_table,
-                                     order_table,
-                                     query_payment,
-                                     query_order,
-                                     status,
-                                     amount):
+    def test_payment_card(self, browser_driver, db_driver, clean_db, card_data,
+                          card_num, message, query_payment, query_order,
+                          status
+                          ):
         driver = PaymentPage(browser_driver)
-        # data = CardDataFactory()
         cursor, connection = db_driver
+        card = card_data
 
         driver.login_page()
         driver.send_form(
-            payment_method,
-            card,
-            month,
-            year,
-            owner,
-            cvv
+            'card',
+            card_num,
+            card['month'],
+            card['year'],
+            card['holder'],
+            card['cvc'],
         )
-        driver.find_notification()
+        ntf = driver.find_notification()
         try:
-            assert message in driver.find_notification()
+            assert_ui(message, ntf)
         except AssertionError:
-            print(f'Проверка UI не пройдена')
+            print("Проверка UI не пройдена")
 
         db = Database()
-        payment_id = db.get_id(
-            cursor,
-            payment_table
-        )
+        last_payment = db.get_last_entry(cursor, 'payment_entity')
 
-        order_id = db.get_id(
-            cursor,
-             order_table
-        )
+        last_order = db.get_last_entry(cursor, 'order_entity')
 
-        payment_data = db.get_table_data(
-            cursor,
-            query_payment,
-            payment_id
-        )
+        payment_data = db.get_data_entry(cursor, query_payment, last_payment)
 
-        order_data = db.get_table_data(
-            cursor,
-            query_order,
-            order_id
-        )
+        order_data = db.get_data_entry(cursor, query_order, last_order)
 
         ids = clean_db
-        ids[payment_table] = payment_id
-        ids[order_table] = order_id
+        ids['payment_entity'] = last_payment
+        ids['order_entity'] = last_order
 
-        try:
-            assert order_data[0] == payment_data[2]
-            assert status == payment_data[1]
-            assert amount == payment_data[0]
-        except AssertionError:
-            print(f"Проверка базы данных не пройдена")
+        assert_record_operation_db(order_data[0], payment_data[2])
+        assert_status_in_db(status, payment_data[1])
+        assert_amount(payment_data[0], 45000 )
 
+    @allure.title('Покупка тура с невалидным номером карты')
+    def test_invalid_card_number(self, browser_driver, card_data):
+        driver = PaymentPage(browser_driver)
+        card = card_data
+
+        driver.login_page()
+        driver.send_form(
+            'card',
+            '4444 4444 4444 4444',
+            card['month'],
+            card['year'],
+            card['holder'],
+            card['cvc'],
+        )
+        ntf = driver.find_notification()
+        driver.close_notification()
+
+        assert_ui('Банк отказал в проведении операции.', ntf)
+
+
+@allure.feature('Покупка тура картой в кредит')
 class TestCredit:
-
+    @allure.title('Покупка в кредит: {status}')
     @pytest.mark.parametrize(
-        'payment_method, card, month, year, owner, cvv, message, credit_table, order_table, query_credit, query_order, status',[
+        'card_num, message, query_credit, query_order, status',[
             (
-                    'credit',
-                    CardDataFactory().card_approved(),
-                    CardDataFactory().month_valid(),
-                    CardDataFactory().year_valid(),
-                    CardDataFactory().holder_valid(),
-                    CardDataFactory().cvv_valid(),
+                    '4444 4444 4444 4441',
                     "Операция одобрена Банком.",
-                    'credit_request_entity',
-                    'order_entity',
                     'SELECT bank_id, status FROM credit_request_entity WHERE id = %s',
                     'SELECT credit_id FROM order_entity WHERE id = %s',
                     'APPROVED'
             ),
             (
-                    'credit',
-                    CardDataFactory().card_declined(),
-                    CardDataFactory().month_valid(),
-                    CardDataFactory().year_valid(),
-                    CardDataFactory().holder_valid(),
-                    CardDataFactory().cvv_valid(),
+                    '4444 4444 4444 4442',
                     "Банк отказал в проведении операции.",
-                    'credit_request_entity',
-                    'order_entity',
                     'SELECT bank_id, status FROM credit_request_entity WHERE id = %s',
                     'SELECT credit_id FROM order_entity WHERE id = %s',
                     'DECLINED'
             )
         ],
         ids=[
-            'credit_approved',
-            'credit_declined',
+            'Успешная покупка в кредит',
+            'Отклонение заявки на кредит',
         ]
     )
-    def test_buy_on_credit(self,
-                           browser_driver,
-                           db_driver,
-                           clean_db,
-                           payment_method,
-                           card,
-                           month,
-                           year,
-                           owner,
-                           cvv,
-                           message,
-                           credit_table,
-                           order_table,
-                           query_credit,
-                           query_order,
-                           status):
+    def test_buy_on_credit(self, browser_driver, db_driver, clean_db, card_data,
+                           card_num, message, query_credit, query_order,
+                           status
+                           ):
         driver = PaymentPage(browser_driver)
-        # data = CardDataFactory()
         cursor, connection = db_driver
+        card = card_data
 
         driver.login_page()
         driver.send_form(
-            payment_method,
-            card,
-            month,
-            year,
-            owner,
-            cvv
+            'credit',
+            card_num,
+            card['month'],
+            card['year'],
+            card['holder'],
+            card['cvc']
         )
-        driver.find_notification()
+        ntf = driver.find_notification()
         try:
-            assert message in driver.find_notification()
+            assert_ui(message, ntf)
         except AssertionError:
-            print('Проверка UI не пройдена')
+            print("Проверка UI не пройдена")
 
         db = Database()
-        credit_id = db.get_id(
-            cursor,
-            credit_table
-        )
+        last_credit = db.get_last_entry(cursor, 'credit_request_entity')
 
-        order_id = db.get_id(
-            cursor,
-             order_table
-        )
+        last_order = db.get_last_entry(cursor, 'order_entity')
 
-        credit_data = db.get_table_data(
-            cursor,
-            query_credit,
-            credit_id
-        )
+        credit_data = db.get_data_entry(cursor, query_credit, last_credit)
 
-        order_data = db.get_table_data(
-            cursor,
-            query_order,
-            order_id
-        )
+        order_data = db.get_data_entry(cursor, query_order, last_order)
 
         ids = clean_db
-        ids[credit_table] = credit_id
-        ids[order_table] = order_id
+        ids['credit_request_entity'] = last_credit
+        ids['order_entity'] = last_order
 
-        try:
-            assert status == credit_data[1]
-            assert order_data[0] == credit_data[0]
-        except AssertionError:
-            print('Проверка DB не пройдена')
+        assert_status_in_db(status, credit_data[1])
+        assert_record_operation_db(order_data[0], credit_data[0])

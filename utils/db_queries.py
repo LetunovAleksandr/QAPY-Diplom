@@ -1,11 +1,16 @@
+import allure
+
 class Database:
-    def get_id(self, cursor, table_name):
+
+    @allure.step('Получить ID последней записи в БД')
+    def get_last_entry(self, cursor, table_name):
         cursor.execute(
-            f'SELECT id FROM {table_name} ORDER BY id DESC LIMIT 1'
+            f'SELECT id, created FROM {table_name} ORDER BY created DESC LIMIT 1'
         )
         return cursor.fetchone()[0]
 
-    def get_table_data(self, cursor, query, id):
+    @allure.step('Получить информацию последней записи в БД')
+    def get_data_entry(self, cursor, query, id):
         cursor.execute(query, id)
         return cursor.fetchone()
 
