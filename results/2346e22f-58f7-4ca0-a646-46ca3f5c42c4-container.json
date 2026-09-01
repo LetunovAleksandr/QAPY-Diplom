@@ -1,0 +1,1 @@
+{"uuid": "eb414f82-3763-400e-bec4-853b77ce9552", "befores": [{"name": "cvc", "status": "passed", "start": 1788287664213, "stop": 1788287664213}], "afters": [{"name": "cvc::<lambda>", "start": 1788287665523}], "start": 1788287664213, "stop": 1788287665523}

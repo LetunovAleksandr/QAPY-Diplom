@@ -1,61 +1,63 @@
+import allure
 import pytest
+
+from tests.conftest import card_data
 from utils.api_client import APIClient
-from factories.card_data_factory import CardDataFactory
+from utils.helper import assert_status_code, assert_response
 
+@allure.feature('Платежный шлюз')
 class TestPaymentGate:
-
+    @allure.title('Проверка обработки успешного запроса и отказа')
     @pytest.mark.parametrize(
         'path, card_number, status_code, key, message',[
             (
-              'payment',
-                CardDataFactory().card_approved(),
+              'pay',
+                '4444 4444 4444 4441',
                 200,
               'status',
               'APPROVED'
             ),
             (
-                'payment',
-                CardDataFactory().card_declined(),
+                'pay',
+                '4444 4444 4444 4442',
                 200,
                 'status',
                 'DECLINED'
             ),
             (
                 'credit',
-                CardDataFactory().card_approved(),
+                '4444 4444 4444 4441',
                 200,
                 'status',
                 'APPROVED'
             ),
             (
                 'credit',
-                CardDataFactory().card_declined(),
+                '4444 4444 4444 4442',
                 200,
                 'status',
                 'DECLINED'
             ),
             (
-                'payment',
-                CardDataFactory().card_invalid(),
+                'pay',
+                '4444 4444 4444 4443',
                 500,
                 'message',
                 '500 Internal Server Error'
             )
         ]
     )
-    def test_payment_request(self, path, card_number, status_code, key, message):
+
+    def test_payment_request(self, card_data, path, card_number, status_code, key, message):
         client = APIClient()
-        card_data = CardDataFactory()
+        card = card_data
         response = client.get_request(
             path,
             card_number,
-            card_data.month_valid(),
-            card_data.year_valid(),
-            card_data.holder_valid(),
-            card_data.cvv_valid()
+            card['month'],
+            card['year'],
+            card['holder'],
+            card['cvc']
         )
-        try:
-            assert response.status_code == status_code
-            assert response.json()[key] == message
-        except AssertionError:
-            print('Проверка платежного шлюза не пройдена')
+        assert_status_code(response, status_code)
+        assert_response(response, key, message)

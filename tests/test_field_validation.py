@@ -1,45 +1,18 @@
+import allure
 import pytest
 from pages.payment_page import PaymentPage
-from factories.card_data_factory import CardDataFactory
+from utils.helper import assert_ui
 
+@allure.feature('Форма оплаты банковской картой')
 class TestFieldValidation:
-
+    @allure.title('Проверка обязательных полей ввода данных')
     @pytest.mark.parametrize(
-        "card, month, year, holder, cvv",[
-            (CardDataFactory().empty_field(),
-             CardDataFactory().month_valid(),
-            CardDataFactory().year_valid(),
-             CardDataFactory().holder_valid(),
-             CardDataFactory().cvv_valid()
-            ),
-            (
-                    CardDataFactory().card_invalid()    ,
-                     CardDataFactory().empty_field(),
-                     CardDataFactory().year_valid(),
-                     CardDataFactory().holder_valid(),
-                     CardDataFactory().cvv_valid()
-            ),
-            (
-                    CardDataFactory().card_invalid(),
-                     CardDataFactory().month_valid(),
-                     CardDataFactory().empty_field(),
-                     CardDataFactory().holder_valid(),
-                     CardDataFactory().cvv_valid()
-            ),
-            (
-                    CardDataFactory().card_invalid(),
-                     CardDataFactory().month_valid(),
-                     CardDataFactory().year_valid(),
-                     CardDataFactory().empty_field(),
-                     CardDataFactory().cvv_valid()
-            ),
-            (
-                    CardDataFactory().card_invalid(),
-                    CardDataFactory().month_valid(),
-                    CardDataFactory().year_valid(),
-                    CardDataFactory().holder_valid(),
-                    CardDataFactory().empty_field()
-            )
+        "card, month, year, holder, cvv, field",[
+            ('', '12', '31', 'Ivan Ivanov','999', 'card'),
+            ('4444 4444 4444 4444', '', '31', 'Ivan Ivanov', '999', 'month' ),
+            ('4444 4444 4444 4444', '12', '', 'Ivan Ivanov', '999', 'year' ),
+            ('4444 4444 4444 4444', '12', '31', '', '999', 'holder'),
+            ('4444 4444 4444 4444', '12', '31', 'Ivan Ivanov', '', 'cvc'),
         ],
         ids=[
             'empty_card_field',
@@ -50,13 +23,9 @@ class TestFieldValidation:
         ]
     )
 
-    def test_required_field(self,
-                            browser_driver,
-                            card,
-                            month,
-                            year,
-                            holder,
-                            cvv):
+    def test_required_field(self, browser_driver, card, month,
+                            year, holder, cvv, field
+                            ):
         driver = PaymentPage(browser_driver)
         driver.login_page()
         driver.send_form(
@@ -67,82 +36,44 @@ class TestFieldValidation:
             holder,
             cvv
         )
-        try:
-            assert "Поле обязательно для заполнения" in driver.find_error_sub()
-        except AssertionError:
-            print("Проверка UI не пройдена.")
+        ntf = driver.find_field_error(field)
+        assert_ui("Поле обязательно для заполнения", ntf )
 
+    @allure.title('Негативная проверка поля "Номер карты"')
     @pytest.mark.parametrize(
-        'card_number, month, year, holder, cvv, error_message',[
-            (
-                CardDataFactory().short_card_number(),
-                CardDataFactory().month_valid(),
-                CardDataFactory().year_valid(),
-                CardDataFactory().holder_valid(),
-                CardDataFactory().cvv_valid(),
-                'Неверный формат'
-            ),
-            (
-                CardDataFactory().card_invalid(),
-                CardDataFactory().month_invalid(),
-                CardDataFactory().year_valid(),
-                CardDataFactory().holder_valid(),
-                CardDataFactory().cvv_valid(),
-                'Неверно указан срок действия карты'
-            ),
-            (
-                CardDataFactory().card_invalid(),
-                CardDataFactory().month_invalid(),
-                CardDataFactory().year_invalid(),
-                CardDataFactory().holder_valid(),
-                CardDataFactory().cvv_valid(),
-                'Истек срок действия карты'
-            ),
-            (
-                CardDataFactory().card_invalid(),
-                CardDataFactory().month_valid(),
-                CardDataFactory().year_valid(),
-                    '123456789',
-                CardDataFactory().cvv_valid(),
-                'Некорректное имя владельца карты'
-            ),
-            (
-                CardDataFactory().card_invalid(),
-                CardDataFactory().month_valid(),
-                CardDataFactory().year_valid(),
-                CardDataFactory().holder_valid(),
-                CardDataFactory().cvv_invalid(),
-                'Неверный формат'
-            )
-
+    "field, card, month, year, holder, cvc, expected_message", [
+            ('card','123', '12', '31', 'Ivan Ivanov', '999', 'Неверный формат'),
+            ('month','4444 4444 4444 4444', '01', '26', 'Ivan Ivanov', '999', 'Неверно указан срок действия карты' ),
+            ('year', '4444 4444 4444 4444', '12', '20', 'Ivan Ivanov', '999', 'Истёк срок действия карты'),
+            ('holder', '4444 4444 4444 4444', '12', '31', '123456789', '999','Некорректное имя владельца карты'),
+            ('cvc', '4444 4444 4444 4444', '12', '31', 'Ivan Ivanov', '99', 'Неверный формат'),
         ],
         ids=[
-            'incorrect_card_number',
-            'incorrect_month',
-            'expired_card',
-            'numbers_in_holder_field',
-            'short_cvv'
+            'Некорректный номер карты',
+            'Некорректный месяц',
+            'Истекший срок действия карты',
+            'Цифры в поле "Владелец"',
+            'Короткий cvv'
         ]
     )
     def test_incorrect_field_data(self,
                                   browser_driver,
-                                  card_number,
+                                  field,
+                                  card,
                                   month,
                                   year,
                                   holder,
-                                  cvv,
-                                  error_message):
+                                  cvc,
+                                  expected_message):
         driver = PaymentPage(browser_driver)
         driver.login_page()
         driver.send_form(
             'card',
-            card_number,
+            card,
             month,
             year,
             holder,
-            cvv
+            cvc
         )
-        try:
-            assert error_message in driver.find_error_sub()
-        except AssertionError:
-            print('Проверка UI не пройдена')
+        notification = driver.find_field_error(field)
+        assert_ui(expected_message, notification)
