@@ -1,0 +1,1 @@
+{"uuid": "a0ce0930-3f15-49c5-ae11-110d0f1c08f0", "befores": [{"name": "holder", "status": "passed", "start": 1788354319445, "stop": 1788354319445}], "afters": [{"name": "holder::<lambda>", "start": 1788354320414}], "start": 1788354319445, "stop": 1788354320414}

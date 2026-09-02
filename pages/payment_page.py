@@ -76,29 +76,31 @@ class PaymentPage:
 
     @allure.step('Отображение уведомления о статусе операции')
     def find_notification(self):
-        self.wait.until(
-            ec.visibility_of_element_located(self.notification)
-        )
-        self.get_screenshot()
         try:
-            return self.driver.find_element(*self.notification).text
-        except NoSuchElementException:
-            return False
+            notification = self.wait.until(
+                ec.visibility_of_element_located(self.notification)
+            )
+            self.get_screenshot()
+            return notification.text
+        except TimeoutException:
+            self.get_screenshot()
+            return None
 
 
     @allure.step('Закрыть уведомление')
     def close_notification(self):
-        close_button = self.wait.until(
-            ec.element_to_be_clickable(self.close_notification_button)
-        )
-        close_button.click()
-        self.get_screenshot()
         try:
+            close_button = self.wait.until(
+                ec.element_to_be_clickable(self.close_notification_button)
+            )
+            close_button.click()
+            self.get_screenshot()
             self.wait.until(
                 ec.invisibility_of_element_located(self.notification)
             )
             return True
         except TimeoutException:
+            self.get_screenshot()
             return False
 
     @allure.step('Отображение ошибки ввода в поле')
@@ -114,7 +116,8 @@ class PaymentPage:
         try:
             return self.driver.find_element(*fields[field]).text
         except NoSuchElementException:
-            print('Объект не найден')
+            self.get_screenshot()
+            return None
 
     def get_screenshot(self):
         return allure.attach(
