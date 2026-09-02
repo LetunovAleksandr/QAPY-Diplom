@@ -25,6 +25,7 @@ class PaymentPage:
         self.year_field_error = (By.XPATH, '//*[@id="root"]/div/form/fieldset/div[2]/span/span[2]/span/span/span[3]')
         self.holder_field_error = (By.XPATH, '//*[@id="root"]/div/form/fieldset/div[3]/span/span[1]/span/span/span[3]')
         self.cvc_field_error = (By.XPATH, '//*[@id="root"]/div/form/fieldset/div[3]/span/span[2]/span/span/span[3]')
+        self.error = (By.CSS_SELECTOR, '.input__sub')
 
     @allure.step('Открыть страницу оплаты')
     def login_page(self):
@@ -101,6 +102,15 @@ class PaymentPage:
             return True
         except TimeoutException:
             self.get_screenshot()
+            return False
+
+    def error_displayed(self):
+        try:
+            error = self.wait.until(
+                ec.visibility_of_element_located(self.error)
+            )
+            return error.is_displayed()
+        except:
             return False
 
     @allure.step('Отображение ошибки ввода в поле')

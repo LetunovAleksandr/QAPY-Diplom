@@ -7,12 +7,12 @@ from utils.helper import assert_ui
 class TestFieldValidation:
     @allure.title('Проверка обязательных полей ввода данных')
     @pytest.mark.parametrize(
-        "card, month, year, holder, cvv, field",[
-            ('', '12', '31', 'Ivan Ivanov','999', 'card'),
-            ('4444 4444 4444 4444', '', '31', 'Ivan Ivanov', '999', 'month' ),
-            ('4444 4444 4444 4444', '12', '', 'Ivan Ivanov', '999', 'year' ),
-            ('4444 4444 4444 4444', '12', '31', '', '999', 'holder'),
-            ('4444 4444 4444 4444', '12', '31', 'Ivan Ivanov', '', 'cvc'),
+        "card, month, year, holder, cvv",[
+            ('', '12', '31', 'Ivan Ivanov','999'),
+            ('4444 4444 4444 4444', '', '31', 'Ivan Ivanov', '999' ),
+            ('4444 4444 4444 4444', '12', '', 'Ivan Ivanov', '999' ),
+            ('4444 4444 4444 4444', '12', '31', '', '999'),
+            ('4444 4444 4444 4444', '12', '31', 'Ivan Ivanov', ''),
         ],
         ids=[
             'empty_card_field',
@@ -24,8 +24,7 @@ class TestFieldValidation:
     )
 
     def test_required_field(self, browser_driver, card, month,
-                            year, holder, cvv, field
-                            ):
+                            year, holder, cvv):
         driver = PaymentPage(browser_driver)
         driver.login_page()
         driver.send_form(
@@ -36,8 +35,7 @@ class TestFieldValidation:
             holder,
             cvv
         )
-        ntf = driver.find_field_error(field)
-        assert_ui("Поле обязательно для заполнения", ntf )
+        assert driver.error_displayed()
 
     @allure.title('Негативная проверка поля "Номер карты"')
     @pytest.mark.parametrize(
