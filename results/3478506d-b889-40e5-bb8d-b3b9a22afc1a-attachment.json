@@ -1,0 +1,7 @@
+{
+    "timestamp": "2026-10-22T15:20:20.727+0000",
+    "status": 500,
+    "error": "Internal Server Error",
+    "message": "I/O error on POST request for \"http://gate-simulator:9999/payment\": gate-simulator; nested exception is java.net.UnknownHostException: gate-simulator",
+    "path": "/api/v1/pay"
+}

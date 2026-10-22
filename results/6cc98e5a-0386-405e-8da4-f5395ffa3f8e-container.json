@@ -1,0 +1,1 @@
+{"uuid": "bec2bd35-ff69-42e0-887c-d98bc9eb6149", "befores": [{"name": "query_credit", "status": "passed", "start": 1792682401977, "stop": 1792682401977}], "afters": [{"name": "query_credit::<lambda>", "start": 1792682412375}], "start": 1792682401977, "stop": 1792682412375}

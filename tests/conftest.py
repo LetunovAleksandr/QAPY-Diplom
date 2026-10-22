@@ -2,20 +2,35 @@ import pytest
 from  selenium import webdriver
 import pymysql
 import allure
-
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.safari.options import Options as SafariOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
 
 @pytest.fixture
 def browser_driver(request):
     with allure.step('Подключить браузер'):
         browser = request.config.getoption("--browser")
         if browser == "chrome":
-            driver = webdriver.Chrome()
+            options = ChromeOptions()
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            driver = webdriver.Chrome(options=options)
         elif browser == "firefox":
-            driver = webdriver.Firefox()
+            options = FirefoxOptions()
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            driver = webdriver.Firefox(options=options)
         elif browser == "safari":
-            driver = webdriver.Safari()
+            options = SafariOptions()
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            driver = webdriver.Safari(options=options)
         elif browser == "edge":
-            driver = webdriver.Edge()
+            options = EdgeOptions()
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            driver = webdriver.Edge(options=options)
         else:
             raise ValueError(f"Браузер не поддерживается: {browser}")
 
@@ -49,7 +64,7 @@ def db_driver():
 def card_data():
     with allure.step('Подготовка валидных тестовых данных'):
         card_data = {
-            'card' : '',
+            'card' : '4444 4444 4444 4441',
             'month' : '12',
             'year' : '31',
             'holder' : 'Ivan Ivanov',

@@ -37,7 +37,7 @@ class TestFieldValidation:
         )
         assert driver.error_displayed()
 
-    @allure.title('Негативная проверка поля "Номер карты"')
+    @allure.title('Негативная проверка полей')
     @pytest.mark.parametrize(
     "field, card, month, year, holder, cvc, expected_message", [
             ('card','123', '12', '31', 'Ivan Ivanov', '999', 'Неверный формат'),

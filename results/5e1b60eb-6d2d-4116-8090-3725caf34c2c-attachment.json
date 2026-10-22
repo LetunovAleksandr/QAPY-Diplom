@@ -1,0 +1,7 @@
+{
+    "timestamp": "2026-10-22T15:20:26.846+0000",
+    "status": 405,
+    "error": "Method Not Allowed",
+    "message": "Request method 'PUT' not supported",
+    "path": "/api/v1/pay"
+}
